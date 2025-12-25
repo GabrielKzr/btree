@@ -49,6 +49,8 @@ make clean
 
 ```zsh
 ./main
+#or
+make run
 ```
 
 Example output from the included `main.c`:
