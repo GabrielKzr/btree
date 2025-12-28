@@ -6,9 +6,10 @@
 #include <stdlib.h>
 
 struct btree_node_t {
-    int value;
+    int weight;
     struct btree_node_t* left;
     struct btree_node_t* right;
+    void *data;
 };
 
 struct btree_t {
@@ -21,10 +22,10 @@ void btree_clear(struct btree_t* btree);
 // void btree_clear_all(struct btree_t* btree);
 void btree_destroy(struct btree_t* btree);
 
-int8_t btree_add(struct btree_t* btree, int value);
-int8_t btree_remove(struct btree_t* btree, int value);
+int8_t btree_add(struct btree_t* btree, int weight, void *data);
+int8_t btree_remove(struct btree_t* btree, int weight);
 
-struct btree_node_t* btree_find(struct btree_t* btree, int8_t (*cmp)(int, int), int value);
+struct btree_node_t* btree_find(struct btree_t* btree, int8_t (*cmp)(void *, void *), void* cmp_val);
 
 int8_t btree_dfs(struct btree_t* btree, struct btree_node_t** ret, int size);
 int8_t btree_bfs(struct btree_t* btree, struct btree_node_t** ret, int size);

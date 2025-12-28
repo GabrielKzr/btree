@@ -1,14 +1,14 @@
 # Binary Tree (C)
 
-A simple binary search tree implemented in C, featuring insertion, removal, lookup, printing, and traversal (DFS and BFS). This project is minimal and great for learning and experimenting with tree data structures.
+A simple binary search tree implemented in C. Each node stores an integer weight (used for ordering) and a generic `void* data` payload. The library supports insertion, removal, lookup, printing, and traversal (DFS and BFS).
 
 ## Overview
 
 - Data structures:
-  - `btree_node_t`: holds an `int value` and pointers to `left` and `right` children.
+  - `btree_node_t`: holds an `int weight`, a `void* data` payload, and pointers to `left` and `right` children.
   - `btree_t`: holds a `root` node pointer and the current `size`.
 - Operations:
-  - Initialize and clear the tree
+  - Initialize and clear/destroy the tree
   - Insert unique values (BST property)
   - Remove values
   - Find values with a custom comparison function
@@ -55,11 +55,20 @@ make run
 
 Example output from the included `main.c`:
 ```
+abc... 0
+abc... 1
+abc... 2
+abc... 3
+abc... 4
 [ 10 : [ 5 : [ 1 : ,  ] ,  ] , [ 15 : , [ 20 : ,  ]  ]  ] 
-ret->value 15
-[ 10, 5, 1, 15, 20, ]
-[ 10, 5, 15, 1, 20, ]
+[ 15 : [ 5 : [ 1 : ,  ] ,  ] , [ 20 : ,  ]  ] 
+ret->weight 15
+ret->data abc... 2
+[ 15, 5, 1, 20, ]
+[ 15, 5, 20, 1, ]
 ok
+all working
+ending...
 ```
 
 ## Usage
@@ -73,33 +82,36 @@ int8_t cmp(int a, int b) { return a == b; }
 int main() {
     struct btree_t* btree = malloc(sizeof(struct btree_t));
 
-    btree_init(btree);
+  const char *hello = "hello";
+  const char *world = "world";
 
-    // Insert
-    btree_add(btree, 10);
-    btree_add(btree, 5);
-    btree_add(btree, 15);
+  btree_init(btree);
 
-    // Print
-    btree_print(btree);
+  // Insert weight/payload pairs
+  btree_add(btree, 10, (void*)hello);
+  btree_add(btree, 5,  (void*)world);
 
-    // Find
-    struct btree_node_t* found = btree_find(btree, cmp, 15);
-    if (found) {
-        printf("found: %d\n", found->value);
-    }
+  // Print
+  btree_print(btree);
 
-    // DFS traversal
-    struct btree_node_t* dfs_list[btree->size];
-    btree_dfs(btree, dfs_list, btree->size);
+  // Find
+  struct btree_node_t* found = btree_find(btree, cmp, 10);
+  if (found) {
+    printf("found weight: %d, data: %s\n", found->weight, (char*)found->data);
+  }
 
-    // BFS traversal
-    struct btree_node_t* bfs_list[btree->size];
-    btree_bfs(btree, bfs_list, btree->size);
+  // DFS traversal
+  struct btree_node_t* dfs_list[btree->size];
+  btree_dfs(btree, dfs_list, btree->size);
 
-    // Clear and free all
-    btree_clear(btree);
-    return 0;
+  // BFS traversal
+  struct btree_node_t* bfs_list[btree->size];
+  btree_bfs(btree, bfs_list, btree->size);
+
+  // Clear all nodes AND free stored payloads; frees the tree struct too
+  btree_clear(btree);
+  btree = NULL; // now invalid
+  return 0;
 }
 ```
 
@@ -110,16 +122,16 @@ Header: `inc/btree.h`
 - `int8_t btree_init(struct btree_t* btree);`
   - Initializes a tree; sets `root` and `size`.
 - `void btree_clear(struct btree_t* btree);`
-  - Recursively frees all nodes and then frees the `btree` itself.
+  - Recursively frees all nodes, frees each node's `data`, resets `size`, and frees the `btree` struct itself.
 - `void btree_destroy(struct btree_t* btree);`
-  - Resets `root` and `size` to zero (does not free memory).
-- `int8_t btree_add(struct btree_t* btree, int value);`
-  - Inserts `value` if not already present; enforces BST property.
+  - Clears nodes (does **not** free stored `data`) and then frees the `btree` struct itself.
+- `int8_t btree_add(struct btree_t* btree, int weight, void *data);`
+  - Inserts a unique `weight` with associated payload `data`; enforces BST property.
   - Returns negative value on error; non-negative on success.
-- `int8_t btree_remove(struct btree_t* btree, int value);`
-  - Removes `value`. Returns negative on error; otherwise an implementation-specific status code.
-- `struct btree_node_t* btree_find(struct btree_t* btree, int8_t (*cmp)(int, int), int value);`
-  - Finds a node matching `value` according to `cmp`.
+- `int8_t btree_remove(struct btree_t* btree, int weight);`
+  - Removes `btree_node_t` with matching `weight`and frees `data`. Returns negative on error; non-negative on success.
+- `struct btree_node_t* btree_find(struct btree_t* btree, int8_t (*cmp)(int, int), int weight);`
+  - Finds a node matching `weight` according to `cmp`.
 - `int8_t btree_dfs(struct btree_t* btree, struct btree_node_t** ret, int size);`
   - Fills `ret` with nodes in DFS (preorder). Requires `size >= btree->size`.
 - `int8_t btree_bfs(struct btree_t* btree, struct btree_node_t** ret, int size);`
@@ -127,13 +139,8 @@ Header: `inc/btree.h`
 - `void btree_print(struct btree_t* btree);`
   - Prints the tree recursively in a bracketed form.
 
-## Design Notes & Caveats
+## Design Notes
 
-- `btree_destroy` frees the `btree` struct itself. If you intend to reuse the same `btree_t` allocation, call `btree_clear` instead or re-`malloc` after clearing.
-- `btree_remove` uses a value-pushdown approach (promotes from children) rather than the classic BST delete by predecessor/successor. It works for this sample but differs from standard textbook implementations.
+- `btree_remove` uses a value-pushdown approach (promotes from children) rather than the classic BST delete by predecessor/successor.
 - Traversal functions expect a preallocated array of `struct btree_node_t*` pointers with capacity at least `btree->size`.
 - Error codes are minimal; for robust applications, consider standardizing return values and adding input validation.
-
-## Future Improvements
-
-- Implement a hash function to use not just integers, but also any kind of data (`void *`)
