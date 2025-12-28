@@ -76,8 +76,12 @@ ending...
 Minimal example (see `src/main.c`):
 ```c
 #include "btree.h"
+#include <string.h>
 
-int8_t cmp(int a, int b) { return a == b; }
+// Comparator now compares payloads (`void* data`), not weights
+int8_t cmp(void *a, void *b) {
+  return strcmp((const char*)a, (const char*)b) == 0;
+}
 
 int main() {
     struct btree_t* btree = malloc(sizeof(struct btree_t));
@@ -94,8 +98,8 @@ int main() {
   // Print
   btree_print(btree);
 
-  // Find
-  struct btree_node_t* found = btree_find(btree, cmp, 10);
+  // Find by payload using the comparator
+  struct btree_node_t* found = btree_find(btree, cmp, (void*)world);
   if (found) {
     printf("found weight: %d, data: %s\n", found->weight, (char*)found->data);
   }
@@ -130,8 +134,8 @@ Header: `inc/btree.h`
   - Returns negative value on error; non-negative on success.
 - `int8_t btree_remove(struct btree_t* btree, int weight);`
   - Removes `btree_node_t` with matching `weight`and frees `data`. Returns negative on error; non-negative on success.
-- `struct btree_node_t* btree_find(struct btree_t* btree, int8_t (*cmp)(int, int), int weight);`
-  - Finds a node matching `weight` according to `cmp`.
+- `struct btree_node_t* btree_find(struct btree_t* btree, int8_t (*cmp)(int, int), void* cmp_val);`
+  - Finds a node matching `cmp_val` according to `cmp`.
 - `int8_t btree_dfs(struct btree_t* btree, struct btree_node_t** ret, int size);`
   - Fills `ret` with nodes in DFS (preorder). Requires `size >= btree->size`.
 - `int8_t btree_bfs(struct btree_t* btree, struct btree_node_t** ret, int size);`
