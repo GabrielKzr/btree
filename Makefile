@@ -1,17 +1,21 @@
 CC = gcc
 
+BUILD_DIR = build
 SRC_DIR = src
-OBJ_DIR = bin
+OBJ_DIR = ${BUILD_DIR}/obj
 INC_DIR = inc
 
 CFLAGS = -Wall -Wextra -I${INC_DIR} # -Werror -std=c11 -I$(INC_DIR) #-Wno-implicit-function-declaration
 
-TARGET = main
+TARGET = build/main
 
 SOURCES = $(shell find $(SRC_DIR) -name '*.c')
 OBJECTS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SOURCES))
 
-all: $(TARGET)
+all: build $(TARGET)
+
+build:
+	@mkdir -p $(BUILD_DIR)
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $(OBJECTS) -o $@
@@ -22,6 +26,7 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 
 clean:
 	rm -rf $(OBJ_DIR) $(TARGET)
+	rm -rf ${BUILD_DIR}
 
 run:
 	@./$(TARGET)

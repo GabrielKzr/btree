@@ -32,26 +32,40 @@ src/
 
 ## Build
 
-Requirements: `gcc`, `make` (Linux/macOS; tested on Linux).
+### Makefile
 
-```zsh
+The project can use a Makefile for building:
+
+```bash
+# Build the project
 make
-```
-- Compiles all `*.c` files under `src/`.
-- Places object files under `bin/` and links to a `main` executable.
 
-Clean build artifacts:
-```zsh
+# Build and run
+make run
+
+# Clean build artifacts
 make clean
 ```
 
-## Run
+### CMake
 
-```zsh
-./main
-#or
-make run
+The project can use a CMakeLists.txt file for build:
+
+```bash
+# Create the Makefile generator
+cmake -S . -B build
+
+# Build the project
+make -C build
+
+# Run the project
+./build/app
+
+# Clean build artifacts
+cmake --build build --target clean
 ```
+
+## Run
 
 Example output from the included `main.c`:
 ```
